@@ -64,6 +64,10 @@ func Connect() *mongo.Client {
 	return client
 }
 
+func Collection(name string) *mongo.Collection {
+	return client.Database("command").Collection(name)
+}
+
 func Disconnect() {
 	client.Disconnect(context.TODO())
 }
