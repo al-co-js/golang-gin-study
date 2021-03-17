@@ -1,9 +1,11 @@
 package auth
 
 import (
+	"command/configs/jwt"
 	"command/db"
 	"command/models"
 	"crypto/sha512"
+	"net/http"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -12,14 +14,13 @@ import (
 )
 
 func Login(c *gin.Context) {
-	client := db.Connect()
 	var data models.User
 	c.BindJSON(&data)
 
 	var user models.User
-	err := client.Database("command").Collection("users").FindOne(c, bson.M{"email": data.Email}).Decode(&user)
+	err := db.Collection("users").FindOne(c, bson.M{"email": data.Email}).Decode(&user)
 	if err != nil {
-		c.JSON(500, bson.M{"message": "server error"})
+		c.JSON(http.StatusInternalServerError, bson.M{"message": "server error"})
 		return
 	}
 
@@ -27,11 +28,19 @@ func Login(c *gin.Context) {
 	encrypt := pbkdf2.Key([]byte(data.Password), []byte(buf[1]), 4096, 64, sha512.New)
 
 	if buf[0] != string(encrypt) {
-		c.JSON(401, bson.M{"message": "wrong password"})
+		c.JSON(http.StatusUnauthorized, bson.M{"message": "wrong password"})
 		return
 	}
 
-	user.Password = ""
+	accessToken, err := jwt.CreateToken(user, true)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, bson.M{"message": "server error"})
+		return
+	}
+	refreshToken, err := jwt.CreateToken(user, false)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, bson.M{"message": "server error"})
+	}
 
-	c.JSON(200, bson.M{"message": "success", "data": user})
+	c.JSON(http.StatusOK, bson.M{"message": "success", "data": bson.M{"access_token": *accessToken, "refresh_token": *refreshToken}})
 }
