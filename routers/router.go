@@ -2,7 +2,7 @@ package routers
 
 import (
 	"command/api/auth"
-	"command/api/user"
+	"command/api/users"
 
 	"github.com/gin-gonic/gin"
 )
@@ -21,7 +21,7 @@ func InitRouter() *gin.Engine {
 	userGroup := r.Group("/user")
 	userGroup.Use()
 	{
-		userGroup.POST("/", user.Create)
+		userGroup.POST("/", users.Create)
 	}
 
 	return r
