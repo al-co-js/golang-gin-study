@@ -1,10 +1,11 @@
 package auth
 
 import (
-	"command/configs/jwt"
+	jsonwebtoken "command/configs/jwt"
 	"command/db"
 	"command/models"
 	"crypto/sha512"
+	"encoding/base64"
 	"net/http"
 	"strings"
 
@@ -25,22 +26,28 @@ func Login(c *gin.Context) {
 	}
 
 	buf := strings.Split(user.Password, "|")
-	encrypt := pbkdf2.Key([]byte(data.Password), []byte(buf[1]), 4096, 64, sha512.New)
-
-	if buf[0] != string(encrypt) {
+	salt, err := base64.StdEncoding.DecodeString(buf[1])
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, bson.M{"message": "server error"})
+	}
+	encrypt := pbkdf2.Key([]byte(data.Password), salt, 80903, 512, sha512.New)
+	if buf[0] != base64.StdEncoding.EncodeToString(encrypt) {
 		c.JSON(http.StatusUnauthorized, bson.M{"message": "wrong password"})
 		return
 	}
 
-	accessToken, err := jwt.CreateToken(user, true)
+	user.Password = ""
+
+	accessToken, err := jsonwebtoken.CreateToken(user, true)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, bson.M{"message": "server error"})
 		return
 	}
-	refreshToken, err := jwt.CreateToken(user, false)
+	refreshToken, err := jsonwebtoken.CreateToken(user, false)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, bson.M{"message": "server error"})
+		return
 	}
 
-	c.JSON(http.StatusOK, bson.M{"message": "success", "data": bson.M{"access_token": *accessToken, "refresh_token": *refreshToken}})
+	c.JSON(http.StatusOK, bson.M{"message": "success", "data": bson.M{"access_token": accessToken, "refresh_token": refreshToken}})
 }

@@ -42,26 +42,33 @@ func Connect() *mongo.Client {
 		}
 
 		indexQuery := []string{"email"}
-		index := []mongo.IndexModel{}
 
-		for _, val := range indexQuery {
-			index = append(index, mongo.IndexModel{
-				Keys: bson.D{
-					{
-						Key:   val,
-						Value: 1,
-					}},
-				Options: options.Index().SetUnique(true),
-			})
-		}
-
-		client.Database("command").Collection("users").Indexes().CreateMany(
-			context.Background(),
-			index,
-		)
+		CreateIndex(indexQuery, "users", options.Index().SetUnique(true))
 	})
 
 	return client
+}
+
+func CreateIndex(indexQuery []string, collectionName string, option *options.IndexOptions) {
+	collection := Collection(collectionName)
+	index := []mongo.IndexModel{}
+
+	for _, val := range indexQuery {
+		index = append(index, mongo.IndexModel{
+			Keys: bson.D{
+				{
+					Key:   val,
+					Value: 1,
+				},
+			},
+			Options: option,
+		})
+	}
+
+	collection.Indexes().CreateMany(
+		context.Background(),
+		index,
+	)
 }
 
 func Collection(name string) *mongo.Collection {

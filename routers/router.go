@@ -2,6 +2,7 @@ package routers
 
 import (
 	"command/api/auth"
+	"command/api/token"
 	"command/api/users"
 
 	"github.com/gin-gonic/gin"
@@ -22,6 +23,12 @@ func InitRouter() *gin.Engine {
 	userGroup.Use()
 	{
 		userGroup.POST("/", users.Create)
+	}
+
+	tokenGroup := r.Group("/token")
+	tokenGroup.Use()
+	{
+		tokenGroup.POST("/", token.Refresh)
 	}
 
 	return r

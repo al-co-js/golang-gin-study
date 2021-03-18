@@ -2,32 +2,36 @@ package jwt
 
 import (
 	"command/models"
+	"command/types"
 	"os"
 	"time"
 
-	"github.com/dgrijalva/jwt-go"
+	"github.com/gbrlsnchs/jwt/v3"
 )
 
-func CreateToken(user models.User, access bool) (*string, error) {
+func CreateToken(user models.User, access bool) (string, error) {
 	var secret string
-	var expires time.Duration
+	now := time.Now()
 	if access {
 		secret = os.Getenv("ACCESS_SECRET")
-		expires = time.Minute * 15
+		now.Add(time.Minute * 15)
 	} else {
 		secret = os.Getenv("REFRESH_SECRET")
-		expires = time.Hour * 24 * 7
+		now.Add(time.Hour * 24 * 7)
 	}
 
-	claims := jwt.MapClaims{}
-	claims["access"] = access
-	claims["user"] = user
-	claims["exp"] = time.Now().Add(expires).Unix()
-	at := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	token, err := at.SignedString([]byte(secret))
+	payload := types.Payload{
+		Payload: jwt.Payload{
+			ExpirationTime: jwt.NumericDate(now),
+		},
+		Access: access,
+		User:   user,
+	}
+	hs := jwt.NewHS256([]byte(secret))
+	token, err := jwt.Sign(payload, hs)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
-	return &token, nil
-}
+	return string(token), nil
+} 

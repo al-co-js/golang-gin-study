@@ -5,6 +5,7 @@ import (
 	"command/models"
 	"crypto/rand"
 	"crypto/sha512"
+	"encoding/base64"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -18,8 +19,8 @@ func Create(c *gin.Context) {
 
 	salt := make([]byte, 64)
 	rand.Read(salt)
-	encrypt := pbkdf2.Key([]byte(user.Password), salt, 4096, 64, sha512.New)
-	user.Password = string(encrypt) + "|" + string(salt)
+	encrypt := pbkdf2.Key([]byte(user.Password), salt, 80903, 512, sha512.New)
+	user.Password = base64.StdEncoding.EncodeToString(encrypt) + "|" + base64.StdEncoding.EncodeToString(salt)
 
 	_, err := db.Collection("users").InsertOne(c, user)
 	if err != nil {
