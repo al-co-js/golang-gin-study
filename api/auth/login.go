@@ -7,7 +7,6 @@ import (
 	"command/types"
 	"crypto/sha512"
 	"encoding/base64"
-	"fmt"
 	"net/http"
 	"strings"
 
