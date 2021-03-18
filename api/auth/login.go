@@ -7,6 +7,7 @@ import (
 	"command/types"
 	"crypto/sha512"
 	"encoding/base64"
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -22,6 +23,10 @@ func Login(c *gin.Context) {
 	var user models.User
 	err := db.Collection("users").FindOne(c, bson.M{"email": data.Email}).Decode(&user)
 	if err != nil {
+		if strings.Contains(err.Error(), "no documents") {
+			c.JSON(http.StatusNotFound, bson.M{"message": "could not find user email"})
+			return
+		}
 		c.JSON(http.StatusInternalServerError, bson.M{"message": "server error"})
 		return
 	}
@@ -30,7 +35,9 @@ func Login(c *gin.Context) {
 	salt, err := base64.StdEncoding.DecodeString(buf[1])
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, bson.M{"message": "server error"})
+		return
 	}
+
 	encrypt := pbkdf2.Key([]byte(data.Password), salt, 80903, 512, sha512.New)
 	if buf[0] != base64.StdEncoding.EncodeToString(encrypt) {
 		c.JSON(http.StatusUnauthorized, bson.M{"message": "wrong password"})
