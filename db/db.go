@@ -43,13 +43,13 @@ func Connect() *mongo.Client {
 
 		indexQuery := []string{"email"}
 
-		CreateIndex(indexQuery, "users", options.Index().SetUnique(true))
+		CreateIndex("users", indexQuery, options.Index().SetUnique(true))
 	})
 
 	return client
 }
 
-func CreateIndex(indexQuery []string, collectionName string, option *options.IndexOptions) {
+func CreateIndex(collectionName string, indexQuery []string, option *options.IndexOptions) {
 	collection := Collection(collectionName)
 	index := []mongo.IndexModel{}
 
