@@ -41,9 +41,8 @@ func Connect() *mongo.Client {
 			log.Fatal(err)
 		}
 
-		indexQuery := []string{"email"}
-
-		CreateIndex("users", indexQuery, options.Index().SetUnique(true))
+		CreateIndex("users", []string{"email"}, options.Index().SetUnique(true))
+		CreateIndex("refresh_tokens",  []string{"token"}, options.Index().SetUnique(true))
 	})
 
 	return client

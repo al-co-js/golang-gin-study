@@ -4,6 +4,7 @@ import (
 	jsonwebtoken "command/configs/jwt"
 	"command/db"
 	"command/models"
+	"command/types"
 	"crypto/sha512"
 	"encoding/base64"
 	"net/http"
@@ -15,7 +16,7 @@ import (
 )
 
 func Login(c *gin.Context) {
-	var data models.User
+	var data types.LoginRequest
 	c.BindJSON(&data)
 
 	var user models.User
@@ -49,5 +50,11 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, bson.M{"message": "success", "data": bson.M{"access_token": accessToken, "refresh_token": refreshToken}})
+	_, err = db.Collection("refresh_tokens").InsertOne(c, bson.M{"token": refreshToken, "uuid": data.UUID})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, bson.M{"message": "server error"})
+		return
+	}
+
+	c.JSON(http.StatusOK, bson.M{"message": "success", "data": bson.M{"access_token": accessToken}})
 }
