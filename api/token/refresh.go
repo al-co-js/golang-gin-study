@@ -56,5 +56,5 @@ func Refresh(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, bson.M{"message": "success", "data": bson.M{"access_token": accessToken, "refresh_token": refreshToken}})
+	c.JSON(http.StatusOK, bson.M{"message": "success", "data": bson.M{"access_token": accessToken}})
 }
